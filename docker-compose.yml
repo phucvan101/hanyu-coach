@@ -1,0 +1,11 @@
+services:
+  hanyu-coach:
+    build: .
+    image: hanyu-coach:latest
+    container_name: hanyu-coach
+    # chỉ mở cho chính máy này (không ai trong mạng LAN truy cập được)
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
