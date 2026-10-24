@@ -97,6 +97,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../api'
 import { speak, speaking } from '../composables/useTts'
+import { playCorrect, playWrong } from '../composables/useSfx'
 import { settings } from '../composables/useSettings'
 import InsightPanel from './InsightPanel.vue'
 import SpeakButton from './SpeakButton.vue'
@@ -162,8 +163,11 @@ async function send({ text, mode, audioUrl }) {
     selectedId.value = null
     composer.value?.reset()
     emit('update', c)
+    // câu của mình có nhận xét thì báo đúng/sai, đợi tiếng dứt rồi AI mới đọc
+    const judged = !!(mine?.eval && Object.keys(mine.eval).length)
+    if (judged) (hasFix(mine) ? playWrong : playCorrect)()
     const last = c.turns[c.turns.length - 1]
-    if (autoSpeak.value && last?.role === 'ai') speak(last.hanzi).catch(() => {})
+    if (autoSpeak.value && last?.role === 'ai') setTimeout(() => speak(last.hanzi).catch(() => {}), judged ? 450 : 0)
   } catch (e) {
     err.value = e.message
   } finally {

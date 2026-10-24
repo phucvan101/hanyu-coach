@@ -44,7 +44,7 @@
         <Transition name="fade" mode="out-in"><component :is="Component" :key="route.fullPath" /></Transition>
       </RouterView>
     </main>
-    <ReactionClip />
+    <ReactionClip :with-rail="!route.meta.focus" />
   </div>
 </template>
 

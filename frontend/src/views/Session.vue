@@ -111,7 +111,8 @@ import Seal from '../components/Seal.vue'
 import SpeakButton from '../components/SpeakButton.vue'
 import ErrorExplain from '../components/ErrorExplain.vue'
 import { loadSettings } from '../composables/useSettings'
-import { useStreak } from '../composables/useReactions'
+import { useStreak, playResult } from '../composables/useReactions'
+import { playCorrect, playWrong } from '../composables/useSfx'
 
 const route = useRoute()
 const router = useRouter()
@@ -257,6 +258,8 @@ async function answerSentence() {
   try {
     const r = await api.post(`/api/sentence-reviews/${s.id}/answer`, { answer: sentenceText.value })
     Object.assign(s, r, { answered: true, _showing: true })
+    if (r.correct) playCorrect()
+    else playWrong()
     streak.hit(r.correct)
   } catch (e) {
     err.value = e.message
@@ -279,6 +282,7 @@ async function finishConvo() {
   try {
     const r = await api.post(`/api/convos/${convo.value.id}/finish`)
     result.value = { ...r, stage: convo.value.stage }
+    playResult(r.passed, r.score)
     st.value.convos = st.value.convos.filter((c) => c.id !== convo.value.id).concat([{ ...convo.value, status: 'done', score: r.score }])
     phase.value = 'result'
   } catch (e) {

@@ -151,6 +151,7 @@ import { speak } from '../composables/useTts'
 import Seal from '../components/Seal.vue'
 import SpeakButton from '../components/SpeakButton.vue'
 import TianZiGe from '../components/TianZiGe.vue'
+import { playCorrect, playWrong } from '../composables/useSfx'
 
 const PREF_KEY = 'hanyu.flashcards'
 const quickScopes = [
@@ -266,10 +267,13 @@ async function start(cards) {
   }
 }
 
-function showCard() {
+function showCard(delay = 0) {
   flipped.value = false
-  // mặt trước là âm thanh thì phải đọc ngay
-  if (direction.value === 'au') say(cur.value.hanzi)
+  // mặt trước là âm thanh thì phải đọc ngay (sau khi chấm thẻ thì đợi tiếng đúng/sai dứt)
+  if (direction.value === 'au') {
+    const c = cur.value
+    setTimeout(() => { if (cur.value === c) say(c.hanzi) }, delay)
+  }
 }
 
 function flip() {
@@ -297,6 +301,9 @@ async function rate(v) {
     if (v >= 2) stats.remembered++
     if (v === 1) forgot.value.push(c)
   }
+  // "Quên" = sai, các mức còn lại = nhớ
+  if (v === 1) playWrong()
+  else playCorrect()
   if (v === 1 && retryForgot.value) queue.value.push({ ...c, retry: true })
   history.value.push({ card: c, rating: v })
   if (idx.value + 1 >= queue.value.length) {
@@ -305,7 +312,7 @@ async function rate(v) {
     return
   }
   idx.value++
-  showCard()
+  showCard(450)
 }
 
 function back() {

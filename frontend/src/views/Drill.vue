@@ -144,6 +144,7 @@ import Seal from '../components/Seal.vue'
 import SpeakButton from '../components/SpeakButton.vue'
 import TianZiGe from '../components/TianZiGe.vue'
 import { useStreak } from '../composables/useReactions'
+import { playCorrect, playWrong } from '../composables/useSfx'
 
 const PREF_KEY = 'hanyu.drill.pinyin'
 const quickScopes = [
@@ -272,6 +273,8 @@ async function submit(giveUp = false) {
   try {
     const r = await api.post(`/api/drill/pinyin/${c.vocab_id}/check`, { answer: ans, record: !c.retry && !hinted.audio })
     res.value = r
+    if (r.correct) playCorrect()
+    else if (!giveUp) playWrong()
     if (!c.retry) {
       stats.total++
       if (r.correct) stats.correct++
@@ -284,7 +287,8 @@ async function submit(giveUp = false) {
     }
     await nextTick()
     nextBtn.value?.focus()
-    if (autoSpeak.value && !hinted.audio) speak(r.answer.hanzi).catch(() => {})
+    // đợi tiếng báo đúng/sai dứt rồi mới đọc từ
+    if (autoSpeak.value && !hinted.audio) setTimeout(() => speak(r.answer.hanzi).catch(() => {}), r.correct || !giveUp ? 450 : 0)
   } catch (e) {
     err.value = e.message
   } finally {

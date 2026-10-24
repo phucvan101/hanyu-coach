@@ -79,6 +79,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '../api'
 import { speak } from '../composables/useTts'
+import { playCorrect, playWrong } from '../composables/useSfx'
 import HanziInput from './HanziInput.vue'
 import Seal from './Seal.vue'
 import SpeakButton from './SpeakButton.vue'
@@ -129,10 +130,13 @@ async function submit(ans) {
   err.value = ''
   try {
     const res = await api.post(`/api/quiz-items/${props.item.id}/answer`, { answer: ans })
+    if (res.correct) playCorrect()
+    else playWrong()
     emit('answered', res)
     await nextTick()
     nextBtn.value?.focus()
-    if (q.value !== 'listen_hanzi') speak(res.answer.hanzi).catch(() => {})
+    // đợi tiếng báo đúng/sai dứt rồi mới đọc từ
+    if (q.value !== 'listen_hanzi') setTimeout(() => speak(res.answer.hanzi).catch(() => {}), 450)
   } catch (e) {
     err.value = e.message
   } finally {
